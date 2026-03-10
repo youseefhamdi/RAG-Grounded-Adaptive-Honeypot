@@ -1,0 +1,60 @@
+version: '3.9'
+services:
+  cowrie:
+    image: cowrie/cowrie:latest
+    deploy:
+      replicas: 20
+    volumes:
+      - ./honeypot/cowrie.cfg:/cowrie/etc/cowrie.cfg:ro
+      - cowrie_logs:/cowrie/var/log/cowrie
+    networks:
+      honeypot_net:
+        ipv4_address: 10.0.0.0/24
+    ports:
+      - "2222-2241:2222"
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.8.0
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - ragin_net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - ragin_net
+
+  ragin:
+    build: .
+    depends_on:
+      - qdrant
+      - redis
+    volumes:
+      - cowrie_logs:/var/log/cowrie:ro
+      - ./config:/app/config
+      - ./data:/app/data
+    networks:
+      - ragin_net
+      - honeypot_net
+    environment:
+      - CONFIG_PATH=/app/config/config.yaml
+
+volumes:
+  cowrie_logs:
+  qdrant_data:
+
+networks:
+  honeypot_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+  ragin_net:
+    driver: bridge

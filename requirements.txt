@@ -1,0 +1,35 @@
+# Core
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+pydantic==2.7.0
+redis==5.0.4
+pyyaml==6.0.1
+jsonlines==4.0.0
+
+# ML - Chrollo
+scikit-learn==1.4.2
+joblib==1.4.2
+numpy==1.26.4
+scipy==1.13.0
+
+# RAG - Don
+qdrant-client==1.9.1
+rank-bm25==0.2.2
+
+# Embeddings + LLM (HuggingFace path)
+sentence-transformers==3.0.1
+transformers==4.41.0
+torch==2.3.0
+accelerate==0.30.0
+
+# OpenAI-compat path
+openai==1.30.0
+
+# Network + Ingestion
+requests==2.32.2
+aiohttp==3.9.5
+
+# Evaluation
+matplotlib==3.9.0
+pandas==2.2.2
+pytest==8.2.0
