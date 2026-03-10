@@ -1,38 +1,50 @@
-# RAGIN: RAG-Powered Intelligent Honeypots
-## Model-Agnostic Adaptive Honeypot Intelligence Framework
+# RAGIN: RAG-Grounded Adaptive Honeypot Intelligence
+
+## Per-Attacker Behavioral Profiling for Threat Classification and Deception
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Paper](https://img.shields.io/badge/Paper-2026-green.svg)](https://github.com/youseefhamdi/SPECTRA-CyberDefense)
 
-**RAGIN** is a fully autonomous honeypot intelligence system combining:
-- **C1 (Chrollo)**: 150-feature Random Forest behavioral classifier
-- **C2 (Don)**: Hybrid dense+sparse RAG with poisoning defense
-- **C3 (Hisoka)**: Skill-stratified adaptive LLM deception
+**RAGIN** (Retrieval-Augmented Honeypot Intelligence Network) is a three-component adaptive cyber deception framework combining:
+
+- **C1 (Chrollo)**: 150-feature Random Forest behavioral classifier — 94.2% accuracy, 3.1% FPR
+- **C2 (Don)**: Hybrid dense+sparse RAG engine over 780K+ threat intelligence documents with PageRank-based poisoning defense
+- **C3 (Hisoka)**: Per-attacker skill-stratified adaptive LLM deception — 4.1× dwell time increase
+
+> 📄 **Paper**: Ibrahim, Y. H. Z., & Salama, M. K. (2026). *RAGIN: RAG-Grounded Adaptive Honeypot Intelligence with Per-Attacker Behavioral Profiling for Threat Classification and Deception.*
+
+---
 
 ## 🎯 Key Features
 
-- **Model Agnostic**: Switch between Ollama, HuggingFace, OpenAI-compatible APIs with ONE config line
-- **Production-Ready**: Redis async pipeline, FastAPI REST API, Docker deployment
-- **Research-Grade**: Full ablation study, metrics, citations, reproducible results
-- **780K+ Document RAG**: Exploit-DB, MITRE ATT&CK, OSINT IP reputation
-- **Real-Time Skill Profiling**: Novice/Intermediate/Expert classification
-- **Adaptive Deception**: Tier-specific honeypot responses via LLM
+- **Model-Agnostic**: Switch between Ollama, HuggingFace, or OpenAI-compatible APIs with **one config line**
+- **RAG-Grounded**: 780K+ documents (Exploit-DB, MITRE ATT&CK, OSINT) — 80× larger than prior corpora
+- **Poisoning Defense**: PageRank-based document credibility scoring at index ingestion
+- **Real-Time Skill Profiling**: Novice / Intermediate / Expert classification in 100 ms
+- **Adaptive Deception**: Tier-specific Qwen-32B LLM responses maximize attacker dwell time
+- **Evidence-Cited Attribution**: Every MITRE ATT&CK mapping includes source provenance
+- **Empirically Validated**: Full ablation study over 500 labeled attack sessions
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 ```bash
 # Option 1: Ollama (Recommended for local deployment)
 curl https://ollama.ai/install.sh | sh
-ollama pull qwen2:7b
-ollama pull nomic-embed-text
+ollama pull qwen2.5:32b          # Paper model: Qwen-32B
+ollama pull mistral              # Embeddings: Mistral-7B (768-dim)
 
-# Option 2: LM Studio / vLLM (OpenAI-compatible)
+# Option 2: vLLM / LM Studio (OpenAI-compatible)
 # Start your server at http://localhost:8000
 
-# Infrastructure
-docker-compose up -d redis qdrant
-```
+# Required infrastructure
+docker-compose up -d qdrant      # Vector DB (required)
+# Note: Redis is optional — used only for query caching optimization
+
 
 ### Installation
 ```bash
@@ -75,35 +87,49 @@ curl -X POST http://localhost:8000/analyze \
 ## 📊 Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Cowrie Honeypot Cluster (20 containers)                   │
-│  SSH/Telnet/HTTP/MySQL sessions → Redis                    │
-└────────────────┬────────────────────────────────────────────┘
-                 │
-         ┌───────▼────────┐
-         │  Redis Broker  │
-         │  Async Queues  │
-         └───────┬────────┘
-                 │
-    ┌────────────▼─────────────┐
-    │  C1: Chrollo Classifier  │
-    │  150-feature RF          │
-    │  Escalation threshold τ  │
-    └────────────┬─────────────┘
-                 │ (malicious & conf >= τ)
-    ┌────────────▼─────────────┐
-    │  C2: Don RAG Engine      │
-    │  Hybrid retrieval        │
-    │  Qdrant + BM25           │
-    │  IQS scoring             │
-    └────────────┬─────────────┘
-                 │
-    ┌────────────▼─────────────┐
-    │  C3: Hisoka Deceptor     │
-    │  Skill classifier        │
-    │  Adaptive LLM response   │
-    └──────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Cowrie Honeypot Cluster (20 Docker containers)              │
+│  SSH / Telnet / HTTP / MySQL  →  Raw session telemetry       │
+└────────────────────┬─────────────────────────────────────────┘
+                     │ commands, network flows, file accesses
+                     ▼
+    ┌────────────────────────────┐
+    │  C1: Chrollo Classifier    │
+    │  150-feature Random Forest │
+    │  Escalation threshold τ=0.85│
+    └────────────────┬───────────┘
+                     │ confidence ≥ 0.85 → escalate
+                     ▼
+    ┌────────────────────────────┐
+    │  C2: Don RAG Engine        │
+    │  Hybrid dense+sparse       │
+    │  Qdrant (HNSW) + BM25      │
+    │  PageRank credibility gate │
+    │  780K docs / 50 ms latency │
+    └────────────────┬───────────┘
+                     │ top-10 docs + CVEs + MITRE techniques
+                     ▼
+    ┌────────────────────────────┐
+    │  C3: Hisoka Deceptor       │
+    │  Skill: Novice/Inter/Expert│
+    │  Qwen-32B adaptive response│
+    │  IQS-scored output         │
+    └────────────────────────────┘
+
 ```
+
+##Component Latency Budget
+
+```
+
+| Component                    | Latency  | % of Total |
+| ---------------------------- | -------- | ---------- |
+| C1 Chrollo (ML inference)    | 150 ms   | 5.7%       |
+| C2 Don (RAG retrieval + LLM) | 2,100 ms | 79.2%      |
+| C3 Hisoka (skill + response) | 400 ms   | 15.1%      |
+| Total end-to-end             | 2,650 ms | 100%       |
+```
+- ** Optimization path: ANN tuning + Redis LRU cache projected to reduce total to ~950 ms (−64.2%) — see paper Section 3.5.
 
 ## 🔧 Configuration
 
@@ -156,11 +182,14 @@ python -m evaluation.runeval --data data/test_sessions.jsonl
 
 **Expected Results:**
 ```
-Configuration              Accuracy   FPR    F1
-────────────────────────────────────────────────
-Chrollo-only               94.2%     3.8%   0.93
-Chrollo + Don              96.1%     2.4%   0.95
-Full RAGIN (C1+C2+C3)      97.8%     1.2%   0.97
+Configuration                  Accuracy   FPR     F1
+──────────────────────────────────────────────────────
+Static Cowrie (no ML)            63.6%    10.0%   0.71
+Signature IDS (Suricata 7.0)     71.5%     8.2%   0.76
+C1 only  — Chrollo ML            89.5%     4.8%   0.91
+C1 + C2  — + Don RAG             93.2%     3.5%   0.94
+C1 + C2 + C3 — Full RAGIN        94.2%     3.1%   0.96
+
 ```
 
 ## 🧪 Testing
@@ -260,7 +289,7 @@ RAGIN/
 
 Based on the paper:
 > **RAGIN: RAG-Powered Intelligent Honeypots with Adaptive Deception**  
-> Youssef Hamdi et al., 2024
+> Youssef Hamdi et al., 2026
 
 Key Contributions:
 1. **Model-agnostic framework** supporting Ollama, HuggingFace, OpenAI-compatible APIs
@@ -271,12 +300,16 @@ Key Contributions:
 
 ## 📊 Performance
 
-- **Accuracy**: 97.8% (full RAGIN)
-- **False Positive Rate**: 1.2%
-- **F1 Score**: 0.97
-- **Latency**: <2000ms end-to-end
-- **Scalability**: 20 concurrent honeypots
-- **RAG Corpus**: 780K+ documents
+- **Detection Accuracy**: 94.2% (Full RAGIN C1+C2+C3)
+- **False Positive Rate**: 3.1%
+- **F1 Score**: 0.96
+- **MITRE ATT&CK Mapping**: 92.1%
+- **IQS (Intelligence Quality Score)**: 0.92
+- **Attacker Dwell Time**: 4.1× increase vs. non-adaptive baseline
+- **Threat Actor Attribution**: 67.2% coverage
+- **End-to-End Latency**: 2,650 ms (projected <950 ms with caching)
+- **Honeypot Cluster**: 20 concurrent Cowrie containers
+- **RAG Corpus**: 780K+ documents (Exploit-DB, MITRE ATT&CK, OSINT)
 
 ## 🛠️ Troubleshooting
 
